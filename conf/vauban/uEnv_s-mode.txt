@@ -5,7 +5,7 @@
 setenv autoload no;
 dhcp;
 setenv fileaddr 0x90000000;
-setenv serverip 192.168.2.5;
+setenv serverip 10.205.160.54;
 tftp ${fileaddr} vauban-fitImage.fit
 bootm start ${fileaddr};
 bootm loados ${fileaddr};
