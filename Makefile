@@ -308,7 +308,7 @@ qemu-icicle:
 		-dtb $(wrkdir)/riscvpc.dtb \
 		-initrd $(initramfs) \
 		-display none -serial null \
-		-serial stdio \
+		-serial mon:stdio \
 		-D qemu.log -d unimp
 
 .PHONY: qemu-icicle-gdb
@@ -316,6 +316,7 @@ qemu-icicle-gdb:
 	$(qemu) -M microchip-icicle-kit \
 		-m 3G -smp 5 \
 		-kernel $(vmlinux_bin) \
+		-dtb $(wrkdir)/riscvpc.dtb \
 		-dtb $(wrkdir)/riscvpc.dtb \
 		-initrd $(initramfs) \
 		-display none -serial null \
@@ -326,7 +327,7 @@ qemu-icicle-gdb:
 .PHONY: qemu-alex
 qemu-alex:
 	$(qemu) -M virt \
-		-cpu rv64,v=true,zbb=true,h=true,sscofpmf=true \
+		-cpu rv64,v=true,zbb=true,h=true,sscofpmf=true,x-zvkned=true \
 		-m 8G -smp 16 \
 		-nographic \
 		-kernel $(vmlinux_bin) \
@@ -510,8 +511,8 @@ $(xen): $(xen_srcdir) $(CROSS_COMPILE_CC)
 .PHONY: processed-schema qemu-dtbs
 processed-schema: dtbs_check
 qemu-dtbs: processed-schema
-	$(qemu) -smp 4 -M virt,aia=aplic,dumpdtb=$(qemu_dtb) -m 1G -nographic
-	dt-validate --schema $(processed_schema) $(qemu_dtb)
+	$(qemu) -smp 4 -M virt,aia=aplic,dumpdtb=$(qemu_dtb) -cpu max -m 1G -nographic
+	dt-validate --schema $(processed_schema) $(qemu_dtb) 2>&1 | tee logs/dtbdump.log
 
 $(buildroot_initramfs_wrkdir):
 	mkdir -p $(buildroot_initramfs_wrkdir)
@@ -699,7 +700,7 @@ $(hss_payload_generator): $(payload_generator_tarball)
 $(hss_uboot_payload_bin): $(uboot_s) $(hss_payload_generator) $(bootloaders-y)
 	cd $(buildroot_initramfs_wrkdir)/images && $(hss_payload_generator) -c $(payload_config) -v $(hss_uboot_payload_bin)
 
-payload_ext: $(uboot_s) $(hss_payload_generator) $(bootloaders-y)
+payload_ext: $(hss_payload_generator)
 	cd $(wrkdir) && $(hss_payload_generator) -c $(payload_config) -v $(hss_uboot_payload_bin)
 
 # random crap
@@ -859,3 +860,14 @@ genimage-icicle-image: $(fit) $(uboot_s_scr)
 		--inputpath "${BINARIES_DIR}" \
 		--outputpath "${BINARIES_DIR}" \
 		--config "${GENIMAGE_CFG}"
+
+.PHONY: program-ahead
+program-ahead:
+	fastboot flash ram ./u-boot-with-spl.bin
+	fastboot reboot
+	sleep 10
+	fastboot oem format
+	fastboot flash uboot ./u-boot-with-spl.bin
+	fastboot flash boot ./boot.ext4
+	fastboot flash root ./root.ext4
+	fastboot reboot

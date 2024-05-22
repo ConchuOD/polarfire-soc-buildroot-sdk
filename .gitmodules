@@ -58,3 +58,6 @@
 [submodule "xen-riscv"]
 	path = xen
 	url = git@gitlab.com:xen-project/collab/xen-riscv.git
+[submodule "k230-boot"]
+	path = k230-boot
+	url = https://github.com/ConchuOD/k230-boot

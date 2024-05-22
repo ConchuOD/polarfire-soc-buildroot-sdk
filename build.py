@@ -14,7 +14,7 @@ class Build:
         self.llvm_ias = try_default(config, "llvm_ias", self.llvm)
         self.as_path = try_default(config, "as_path", None)
         self.ld_path = try_default(config, "ld_path", None)
-        self.llvm_version = try_default(config, "llvm_version", 15)
+        self.llvm_version = try_default(config, "llvm_version", 16)
         self.gcc_version = try_default(config, "gcc_version", 12)
         self.type = try_default(config, "type", "tftp-boot")
         self.devkit = try_default(config, "devkit", "lowmem")
